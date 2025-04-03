@@ -1,25 +1,150 @@
 import {
   Paper,
   Stack,
-  TextInput,
   Switch,
   Button,
   Title,
   Text,
+  Autocomplete,
 } from "@mantine/core";
 import { UseFormReturnType } from "@mantine/form";
+import {
+  useState,
+  useEffect,
+  KeyboardEvent,
+  CSSProperties,
+  ReactNode,
+} from "react";
+import { useDebouncedValue } from "@mantine/hooks";
+
+interface RouteFormValues {
+  pointA: string;
+  pointB: string;
+  includeBridges: boolean;
+  includeTunnels: boolean;
+  avoidObstacles: boolean;
+}
 
 interface ControlPanelProps {
-  form: UseFormReturnType<{
-    pointA: string;
-    pointB: string;
-    includeBridges: boolean;
-    includeTunnels: boolean;
-    avoidObstacles: boolean;
-  }>;
+  form: UseFormReturnType<RouteFormValues>;
   selectedPoint: "A" | "B" | null;
   onPointSelect: (point: "A" | "B") => void;
   hasRoute: boolean;
+  searchStations: (query: string) => Promise<string[]>;
+}
+
+type RoutePoint = "A" | "B";
+
+const CONTAINER_STYLE: CSSProperties = {
+  height: "100%",
+  display: "flex",
+  flexDirection: "column",
+  overflow: "hidden",
+};
+
+const CONTENT_STYLE: CSSProperties = {
+  flex: 1,
+  overflow: "hidden",
+  display: "flex",
+  flexDirection: "column",
+};
+
+const FORM_STYLE: CSSProperties = {
+  flex: 1,
+  overflow: "auto",
+  paddingRight: "8px",
+  marginBottom: "16px",
+};
+
+const CALCULATE_BUTTON_STYLE: CSSProperties = {
+  marginTop: "auto",
+};
+
+interface StationSearchResult {
+  stationOptions: string[];
+  searchValue: string;
+  setSearchValue: (value: string) => void;
+}
+
+function useStationSearch(
+  searchStations: (query: string) => Promise<string[]>,
+): StationSearchResult {
+  const [stationOptions, setStationOptions] = useState<string[]>([]);
+  const [searchValue, setSearchValue] = useState<string>("");
+  const [debouncedSearch] = useDebouncedValue(searchValue, 300);
+
+  useEffect(() => {
+    const performSearch = async (): Promise<void> => {
+      if (debouncedSearch.length >= 2) {
+        try {
+          const results = await searchStations(debouncedSearch);
+          setStationOptions(results);
+        } catch (error) {
+          console.error("Error searching stations:", error);
+          setStationOptions([]);
+        }
+      } else if (debouncedSearch.length === 0) {
+        setStationOptions([]);
+      }
+    };
+    performSearch();
+  }, [debouncedSearch, searchStations]);
+
+  return { stationOptions, searchValue, setSearchValue };
+}
+
+interface RoutePointSelectorProps {
+  point: RoutePoint;
+  form: UseFormReturnType<RouteFormValues>;
+  selectedPoint: RoutePoint | null;
+  onPointSelect: (point: RoutePoint) => void;
+  stationOptions: string[];
+  searchValue: string;
+  setSearchValue: (value: string) => void;
+}
+
+function RoutePointSelector({
+  point,
+  form,
+  selectedPoint,
+  onPointSelect,
+  stationOptions,
+  searchValue,
+  setSearchValue,
+}: RoutePointSelectorProps): ReactNode {
+  return (
+    <>
+      <Autocomplete
+        label={`Point ${point}`}
+        placeholder={`Type to search or click 'Set Point ${point}' then click on map`}
+        data={stationOptions}
+        value={searchValue}
+        onChange={(value: string) => {
+          setSearchValue(value);
+          if (stationOptions.includes(value)) {
+            form.setFieldValue(`point${point}`, value);
+          }
+        }}
+        onKeyDown={(e: KeyboardEvent) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+          }
+        }}
+        variant="filled"
+        mt={point === "B" ? "sm" : undefined}
+      />
+      <Button
+        variant={selectedPoint === point ? "light" : "outline"}
+        color={selectedPoint === point ? "red" : "blue"}
+        onClick={() => onPointSelect(point)}
+        fullWidth
+      >
+        {selectedPoint === point
+          ? `Cancel Point ${point}`
+          : `Set Point ${point}`}
+      </Button>
+    </>
+  );
 }
 
 export function ControlPanel({
@@ -27,36 +152,15 @@ export function ControlPanel({
   selectedPoint,
   onPointSelect,
   hasRoute,
-}: ControlPanelProps) {
+  searchStations,
+}: ControlPanelProps): ReactNode {
+  const pointASearch = useStationSearch(searchStations);
+  const pointBSearch = useStationSearch(searchStations);
+
   return (
-    <Paper
-      shadow="md"
-      p="md"
-      w={350}
-      radius="md"
-      style={{
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-      }}
-    >
-      <div
-        style={{
-          flex: 1,
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <form
-          style={{
-            flex: 1,
-            overflow: "auto",
-            paddingRight: "8px",
-            marginBottom: "16px",
-          }}
-        >
+    <Paper shadow="md" p="md" w={350} radius="md" style={CONTAINER_STYLE}>
+      <div style={CONTENT_STYLE}>
+        <form style={FORM_STYLE} onSubmit={(e) => e.preventDefault()}>
           <Stack gap="lg">
             <Title order={3} c="indigo.7">
               Route Settings
@@ -66,38 +170,26 @@ export function ControlPanel({
               <Title order={5} c="gray.7">
                 Route Points
               </Title>
-              <TextInput
-                label="Point A"
-                placeholder="Click 'Set Point A' then click on map"
-                {...form.getInputProps("pointA")}
-                readOnly
-                variant="filled"
-              />
-              <Button
-                variant={selectedPoint === "A" ? "light" : "outline"}
-                color={selectedPoint === "A" ? "red" : "blue"}
-                onClick={() => onPointSelect("A")}
-                fullWidth
-              >
-                {selectedPoint === "A" ? "Cancel Point A" : "Set Point A"}
-              </Button>
 
-              <TextInput
-                label="Point B"
-                placeholder="Click 'Set Point B' then click on map"
-                {...form.getInputProps("pointB")}
-                readOnly
-                variant="filled"
-                mt="sm"
+              <RoutePointSelector
+                point="A"
+                form={form}
+                selectedPoint={selectedPoint}
+                onPointSelect={onPointSelect}
+                stationOptions={pointASearch.stationOptions}
+                searchValue={pointASearch.searchValue}
+                setSearchValue={pointASearch.setSearchValue}
               />
-              <Button
-                variant={selectedPoint === "B" ? "light" : "outline"}
-                color={selectedPoint === "B" ? "red" : "blue"}
-                onClick={() => onPointSelect("B")}
-                fullWidth
-              >
-                {selectedPoint === "B" ? "Cancel Point B" : "Set Point B"}
-              </Button>
+
+              <RoutePointSelector
+                point="B"
+                form={form}
+                selectedPoint={selectedPoint}
+                onPointSelect={onPointSelect}
+                stationOptions={pointBSearch.stationOptions}
+                searchValue={pointBSearch.searchValue}
+                setSearchValue={pointBSearch.setSearchValue}
+              />
             </Stack>
 
             <Stack gap="xs">
@@ -134,9 +226,7 @@ export function ControlPanel({
           gradient={{ from: "indigo", to: "cyan" }}
           disabled={!hasRoute}
           size="lg"
-          style={{
-            marginTop: "auto",
-          }}
+          style={CALCULATE_BUTTON_STYLE}
         >
           Calculate Route
         </Button>

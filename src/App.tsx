@@ -1,22 +1,24 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Container, Flex } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { ControlPanel } from "./components/ControlPanel";
 import { MapView } from "./components/MapView";
+import { StationService } from "./services/stationService";
+import { PointLabel, RouteFormValues, RoutePoint } from "./types";
+import { AppContainerStyles, FlexContentStyles } from "./styles";
 import "ol/ol.css";
 import "./map-styles.css";
 
-interface RoutePoint {
-  lat: number;
-  lng: number;
-  label: string;
-}
-
 function App() {
-  const [selectedPoint, setSelectedPoint] = useState<"A" | "B" | null>(null);
-  const [points, setPoints] = useState<{ A?: RoutePoint; B?: RoutePoint }>({});
+  const [selectedPoint, setSelectedPoint] = useState<PointLabel | null>(null);
+  const [points, setPoints] = useState<
+    Record<PointLabel, RoutePoint | undefined>
+  >({
+    A: undefined,
+    B: undefined,
+  });
 
-  const form = useForm({
+  const form = useForm<RouteFormValues>({
     initialValues: {
       pointA: "",
       pointB: "",
@@ -26,44 +28,40 @@ function App() {
     },
   });
 
-  const handlePointSelect = (point: "A" | "B") => {
-    setSelectedPoint(selectedPoint === point ? null : point);
-  };
+  const boundSearchStations = useCallback(
+    (query: string) => StationService.searchStations(query),
+    [],
+  );
 
-  const handlePointSet = (point: RoutePoint) => {
-    setPoints((prev) => ({ ...prev, [point.label]: point }));
-    setSelectedPoint(null);
-    form.setFieldValue(
-      `point${point.label}`,
-      `${point.lat.toFixed(6)}, ${point.lng.toFixed(6)}`
-    );
-  };
+  const handlePointSelect = useCallback(
+    (point: PointLabel) => {
+      setSelectedPoint(selectedPoint === point ? null : point);
+    },
+    [selectedPoint],
+  );
+
+  const handlePointSet = useCallback(
+    (point: RoutePoint) => {
+      setPoints((prev) => ({ ...prev, [point.label]: point }));
+      setSelectedPoint(null);
+
+      const coordinateString = `${point.lat.toFixed(6)}, ${point.lng.toFixed(6)}`;
+      form.setFieldValue(`point${point.label}`, coordinateString);
+    },
+    [form],
+  );
+
+  const hasCompleteRoute = Boolean(points.A && points.B);
 
   return (
-    <Container
-      fluid
-      p="md"
-      h="100vh"
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-      }}
-    >
-      <Flex
-        gap="md"
-        style={{
-          flex: 1,
-          minHeight: 0,
-          overflow: "hidden",
-        }}
-      >
+    <Container fluid p="md" h="100vh" style={AppContainerStyles}>
+      <Flex gap="md" style={FlexContentStyles}>
         <ControlPanel
+          searchStations={boundSearchStations}
           form={form}
           selectedPoint={selectedPoint}
           onPointSelect={handlePointSelect}
-          hasRoute={!!points.A && !!points.B}
+          hasRoute={hasCompleteRoute}
         />
         <MapView selectedPoint={selectedPoint} onPointSet={handlePointSet} />
       </Flex>

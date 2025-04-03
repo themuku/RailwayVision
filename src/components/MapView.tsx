@@ -1,24 +1,26 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import Map from "ol/Map";
 import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import OSM from "ol/source/OSM";
+import { MapBrowserEvent } from "ol";
+import { fromLonLat } from "ol/proj";
 import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
-import { fromLonLat, transform } from "ol/proj";
-import { Style, Icon, Text, Fill, Stroke } from "ol/style";
-import { MapBrowserEvent } from "ol";
-
-interface RoutePoint {
-  lat: number;
-  lng: number;
-  label: string;
-}
+import {
+  createMarkerStyle,
+  createPointFromMapClick,
+  DEFAULT_CENTER,
+  DEFAULT_ZOOM,
+  OSM_TILE_URL,
+} from "../utils/mapUtils";
+import { PointLabel, RoutePoint } from "../types";
+import { MapContainerStyles } from "../styles";
 
 interface MapViewProps {
-  selectedPoint: "A" | "B" | null;
+  selectedPoint: PointLabel | null;
   onPointSet: (point: RoutePoint) => void;
 }
 
@@ -26,89 +28,57 @@ export function MapView({ selectedPoint, onPointSet }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<Map | null>(null);
   const vectorSource = useRef(new VectorSource());
+
   const vectorLayer = useRef(
     new VectorLayer({
       source: vectorSource.current,
-      style: (feature) => {
-        const label = feature.get("label");
-        const isPointA = label === "A";
-
-        return new Style({
-          image: new Icon({
-            anchor: [0.5, 1],
-            anchorXUnits: "fraction",
-            anchorYUnits: "fraction",
-            src: `data:image/svg+xml;utf8,${encodeURIComponent(`
-              <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                <path d="M16 2 C10.477 2 6 6.477 6 12 C6 19 16 30 16 30 C16 30 26 19 26 12 C26 6.477 21.523 2 16 2 z" 
-                      fill="${isPointA ? "#228be6" : "#40c057"}" 
-                      stroke="white" 
-                      stroke-width="2"/>
-                <circle cx="16" cy="12" r="5" fill="white"/>
-              </svg>
-            `)}`,
-            scale: 1,
-          }),
-          text: new Text({
-            text: `Point ${label}`,
-            offsetY: 20,
-            fill: new Fill({ color: "#fff" }),
-            stroke: new Stroke({ color: "#000", width: 2 }),
-          }),
-        });
+      style: function (feature) {
+        return createMarkerStyle(feature);
       },
-    })
+    }),
   );
 
-  useEffect(() => {
-    if (!mapContainer.current || map.current) return;
-
-    // Initialize map centered on Azerbaijan
-    map.current = new Map({
-      target: mapContainer.current,
-      layers: [
-        // Base map layer
-        new TileLayer({
-          source: new OSM({
-            url: "https://{a-c}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
-          }),
-        }),
-        vectorLayer.current, // Vector layer for markers
-      ],
-      view: new View({
-        center: fromLonLat([47.5769, 40.2922]), // Azerbaijan coordinates
-        zoom: 7,
-      }),
-    });
-
-    // Handle map clicks
-    const handleMapClick = (event: MapBrowserEvent<UIEvent>) => {
+  const handleMapClick = useCallback(
+    (event: MapBrowserEvent<UIEvent>) => {
       if (!selectedPoint) return;
 
-      const coordinate = transform(event.coordinate, "EPSG:3857", "EPSG:4326");
-      const [lng, lat] = coordinate;
-
-      // Remove existing marker if it exists
       const existingFeatures = vectorSource.current
         .getFeatures()
         .filter((f) => f.get("label") === selectedPoint);
 
       existingFeatures.forEach((f) => vectorSource.current.removeFeature(f));
 
-      // Add new marker
+      const point = createPointFromMapClick(event.coordinate, selectedPoint);
+
       const feature = new Feature({
-        geometry: new Point(fromLonLat([lng, lat])),
+        geometry: new Point(fromLonLat([point.lng, point.lat])),
         label: selectedPoint,
       });
 
       vectorSource.current.addFeature(feature);
+      onPointSet(point);
+    },
+    [selectedPoint, onPointSet],
+  );
 
-      onPointSet({
-        lat,
-        lng,
-        label: selectedPoint,
-      });
-    };
+  useEffect(() => {
+    if (!mapContainer.current || map.current) return;
+
+    map.current = new Map({
+      target: mapContainer.current,
+      layers: [
+        new TileLayer({
+          source: new OSM({
+            url: OSM_TILE_URL,
+          }),
+        }),
+        vectorLayer.current,
+      ],
+      view: new View({
+        center: fromLonLat(DEFAULT_CENTER),
+        zoom: DEFAULT_ZOOM,
+      }),
+    });
 
     map.current.on("click", handleMapClick);
 
@@ -118,17 +88,7 @@ export function MapView({ selectedPoint, onPointSet }: MapViewProps) {
         map.current = null;
       }
     };
-  }, [selectedPoint, onPointSet]);
+  }, [handleMapClick]);
 
-  return (
-    <div
-      ref={mapContainer}
-      style={{
-        flex: 1,
-        height: "100%",
-        borderRadius: "8px",
-        overflow: "hidden",
-      }}
-    />
-  );
+  return <div ref={mapContainer} style={MapContainerStyles} />;
 }
