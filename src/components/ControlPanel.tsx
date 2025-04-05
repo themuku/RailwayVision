@@ -31,6 +31,8 @@ interface ControlPanelProps {
   onPointSelect: (point: "A" | "B") => void;
   hasRoute: boolean;
   searchStations: (query: string) => Promise<string[]>;
+  onCitySelect: (cityName: string, pointLabel: "A" | "B") => void;
+  onCalculate: () => void;
 }
 
 type RoutePoint = "A" | "B";
@@ -60,6 +62,8 @@ const CALCULATE_BUTTON_STYLE: CSSProperties = {
   marginTop: "auto",
 };
 
+// ... (keep existing styles) ...
+
 interface StationSearchResult {
   stationOptions: string[];
   searchValue: string;
@@ -78,7 +82,9 @@ function useStationSearch(
       if (debouncedSearch.length >= 2) {
         try {
           const results = await searchStations(debouncedSearch);
-          setStationOptions(results);
+          // Remove duplicates before setting state
+          const uniqueResults = [...new Set(results)];
+          setStationOptions(uniqueResults);
         } catch (error) {
           console.error("Error searching stations:", error);
           setStationOptions([]);
@@ -92,7 +98,6 @@ function useStationSearch(
 
   return { stationOptions, searchValue, setSearchValue };
 }
-
 interface RoutePointSelectorProps {
   point: RoutePoint;
   form: UseFormReturnType<RouteFormValues>;
@@ -101,6 +106,7 @@ interface RoutePointSelectorProps {
   stationOptions: string[];
   searchValue: string;
   setSearchValue: (value: string) => void;
+  onCitySelect: (cityName: string, pointLabel: RoutePoint) => void;
 }
 
 function RoutePointSelector({
@@ -111,6 +117,7 @@ function RoutePointSelector({
   stationOptions,
   searchValue,
   setSearchValue,
+  onCitySelect,
 }: RoutePointSelectorProps): ReactNode {
   return (
     <>
@@ -123,6 +130,7 @@ function RoutePointSelector({
           setSearchValue(value);
           if (stationOptions.includes(value)) {
             form.setFieldValue(`point${point}`, value);
+            onCitySelect(value, point);
           }
         }}
         onKeyDown={(e: KeyboardEvent) => {
@@ -132,6 +140,9 @@ function RoutePointSelector({
         }}
         variant="filled"
         mt={point === "B" ? "sm" : undefined}
+        onBlur={() => {
+          setDropdownOpen(false);
+        }}
       />
       <Button
         variant={selectedPoint === point ? "light" : "outline"}
@@ -153,6 +164,8 @@ export function ControlPanel({
   onPointSelect,
   hasRoute,
   searchStations,
+  onCitySelect,
+  onCalculate,
 }: ControlPanelProps): ReactNode {
   const pointASearch = useStationSearch(searchStations);
   const pointBSearch = useStationSearch(searchStations);
@@ -160,72 +173,78 @@ export function ControlPanel({
   return (
     <Paper shadow="md" p="md" w={350} radius="md" style={CONTAINER_STYLE}>
       <div style={CONTENT_STYLE}>
-        <form style={FORM_STYLE} onSubmit={(e) => e.preventDefault()}>
-          <Stack gap="lg">
-            <Title order={3} c="indigo.7">
-              Route Settings
-            </Title>
+        <form style={FORM_STYLE}>
+          <Title order={4} mb="md">
+            Route Calculator
+          </Title>
+          <Text size="sm" mb="md" c="dimmed">
+            Set points by searching for cities or by clicking on the map
+          </Text>
 
-            <Stack gap="xs">
-              <Title order={5} c="gray.7">
-                Route Points
-              </Title>
+          <Stack>
+            <RoutePointSelector
+              point="A"
+              form={form}
+              selectedPoint={selectedPoint}
+              onPointSelect={onPointSelect}
+              stationOptions={pointASearch.stationOptions}
+              searchValue={pointASearch.searchValue}
+              setSearchValue={pointASearch.setSearchValue}
+              onCitySelect={onCitySelect}
+            />
 
-              <RoutePointSelector
-                point="A"
-                form={form}
-                selectedPoint={selectedPoint}
-                onPointSelect={onPointSelect}
-                stationOptions={pointASearch.stationOptions}
-                searchValue={pointASearch.searchValue}
-                setSearchValue={pointASearch.setSearchValue}
-              />
+            <RoutePointSelector
+              point="B"
+              form={form}
+              selectedPoint={selectedPoint}
+              onPointSelect={onPointSelect}
+              stationOptions={pointBSearch.stationOptions}
+              searchValue={pointBSearch.searchValue}
+              setSearchValue={pointBSearch.setSearchValue}
+              onCitySelect={onCitySelect}
+            />
 
-              <RoutePointSelector
-                point="B"
-                form={form}
-                selectedPoint={selectedPoint}
-                onPointSelect={onPointSelect}
-                stationOptions={pointBSearch.stationOptions}
-                searchValue={pointBSearch.searchValue}
-                setSearchValue={pointBSearch.setSearchValue}
-              />
-            </Stack>
+            <Switch
+              label="Include bridges"
+              checked={form.values.includeBridges}
+              onChange={(event) =>
+                form.setFieldValue(
+                  "includeBridges",
+                  event.currentTarget.checked,
+                )
+              }
+              mt="md"
+            />
 
-            <Stack gap="xs">
-              <Title order={5} c="gray.7">
-                Route Options
-              </Title>
-              <Text size="sm" c="dimmed">
-                Select which infrastructure to include in the route calculation
-              </Text>
-              <Switch
-                label="Include Bridges"
-                description="Allow route to use railway bridges"
-                {...form.getInputProps("includeBridges", { type: "checkbox" })}
-                size="md"
-              />
-              <Switch
-                label="Include Tunnels"
-                description="Allow route to use railway tunnels"
-                {...form.getInputProps("includeTunnels", { type: "checkbox" })}
-                size="md"
-              />
-              <Switch
-                label="Avoid Obstacles"
-                description="Route around known obstacles"
-                {...form.getInputProps("avoidObstacles", { type: "checkbox" })}
-                size="md"
-              />
-            </Stack>
+            <Switch
+              label="Include tunnels"
+              checked={form.values.includeTunnels}
+              onChange={(event) =>
+                form.setFieldValue(
+                  "includeTunnels",
+                  event.currentTarget.checked,
+                )
+              }
+            />
+
+            <Switch
+              label="Avoid obstacles"
+              checked={form.values.avoidObstacles}
+              onChange={(event) =>
+                form.setFieldValue(
+                  "avoidObstacles",
+                  event.currentTarget.checked,
+                )
+              }
+            />
           </Stack>
         </form>
 
         <Button
-          variant="gradient"
-          gradient={{ from: "indigo", to: "cyan" }}
+          fullWidth
+          color="green"
           disabled={!hasRoute}
-          size="lg"
+          onClick={onCalculate}
           style={CALCULATE_BUTTON_STYLE}
         >
           Calculate Route

@@ -1,3 +1,6 @@
+// types.ts
+export type PointLabel = "A" | "B";
+
 export interface RoutePoint {
   lat: number;
   lng: number;
@@ -12,4 +15,17 @@ export interface RouteFormValues {
   avoidObstacles: boolean;
 }
 
-export type PointLabel = "A" | "B";
+export interface Coordinate {
+  latitude: number;
+  longitude: number;
+}
+
+export interface StationPoint {
+  name: string;
+  coordinate: Coordinate;
+}
+
+export interface RouteData {
+  route: Coordinate[];
+  path: StationPoint[];
+}
