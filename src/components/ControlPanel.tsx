@@ -119,6 +119,8 @@ function RoutePointSelector({
   setSearchValue,
   onCitySelect,
 }: RoutePointSelectorProps): ReactNode {
+  const [, setDropdownOpen] = useState(false);
+
   return (
     <>
       <Autocomplete

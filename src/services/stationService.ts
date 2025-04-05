@@ -3,7 +3,7 @@ export interface PopulationCenter {
   latitude: number;
   longitude: number;
   elementId: number;
-  tags: object;
+  tags: Record<string, string | undefined>;
   lon: number;
   id: string;
   name: string;
@@ -86,13 +86,13 @@ export class PopulationCenterService {
    * Calculates a route between two population centers using their IDs
    * @param fromId ID of the starting population center
    * @param toId ID of the destination population center
-   * @param p0
+   * @param _options
    * @returns Promise resolving to the calculated route data
    */
   public static async calculateRoute(
-    fromId: string,
-    toId: string,
-    p0: {
+    fromId: string | number,
+    toId: string | number,
+    _options: {
       includeBridges: boolean;
       includeTunnels: boolean;
       avoidObstacles: boolean;

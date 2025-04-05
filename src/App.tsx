@@ -72,8 +72,8 @@ function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [selectedCenterIds, setSelectedCenterIds] = useState<{
-    A?: string;
-    B?: string;
+    A?: string | number;
+    B?: string | number;
   }>({});
 
   const [userClicked, setUserClicked] = useState<{
@@ -198,8 +198,10 @@ function App() {
 
     if (exactMatch) return exactMatch;
 
-    const alternativeMatch = results.find(
-      (city) => city.tags?.["name:en"]?.toLowerCase() === searchTerm,
+    const alternativeMatch = results.find((city) =>
+      city.tags && "name:en" in city.tags
+        ? (city.tags["name:en"] as string).toLowerCase() === searchTerm
+        : false,
     );
 
     if (alternativeMatch) return alternativeMatch;
@@ -214,8 +216,6 @@ function App() {
   };
 
   const verifyAndSetCities = async (): Promise<boolean> => {
-    let needsVerification = false;
-
     if (!selectedCenterIds.A && form.values.pointA) {
       const matchingCityA = findMatchingCity("A");
 
