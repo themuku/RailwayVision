@@ -412,12 +412,16 @@ function App() {
   }, []);
 
   return (
-    <Box p="md">
+    <Box style={{ height: "100%" }} p="md">
       <Title order={1} mb="md">
         Rail Route Calculator
       </Title>
 
-      <Flex gap="md" direction={{ base: "column", sm: "row" }}>
+      <Flex
+        gap="md"
+        direction={{ base: "column", sm: "row" }}
+        style={{ height: "calc(100vh - 94px)" }}
+      >
         <Paper withBorder p="md" style={{ flex: 1 }}>
           <form
             onSubmit={form.onSubmit(() => {
@@ -625,7 +629,7 @@ function App() {
           </form>
         </Paper>
 
-        <Paper withBorder style={{ flex: 2, height: "600px" }}>
+        <Paper withBorder style={{ flex: 2, height: "100%" }}>
           <MapView
             selectedPoint={selectedPoint}
             onPointSet={handlePointSet}
@@ -639,3 +643,5 @@ function App() {
 }
 
 export default App;
+
+// Route distance and duration calculated from backend

@@ -1,4 +1,3 @@
-// stationService.ts
 export interface PopulationCenter {
   latitude: number;
   longitude: number;
@@ -14,7 +13,32 @@ export interface PopulationCenter {
 }
 
 export class PopulationCenterService {
-  private static API_BASE_URL = "https://nurlan.bsite.net/api";
+  private static readonly API_BASE_URL = "https://nurlan.bsite.net/api";
+  private static readonly ENDPOINTS = {
+    POPULATION_CENTERS: "/populationcenters",
+    ROUTES: "/routes",
+  };
+
+  /**
+   * Helper method to fetch data from the API
+   * @param endpoint API endpoint to fetch from
+   * @param errorMessage Custom error message prefix
+   * @returns Promise with the parsed JSON response
+   */
+  private static async fetchFromApi<T>(
+    endpoint: string,
+    errorMessage: string,
+  ): Promise<T> {
+    const response = await fetch(`${this.API_BASE_URL}${endpoint}`);
+
+    if (!response.ok) {
+      throw new Error(
+        `${errorMessage}: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    return (await response.json()) as T;
+  }
 
   /**
    * Fetches all population centers from the API
@@ -22,19 +46,10 @@ export class PopulationCenterService {
    */
   public static async getAll(): Promise<PopulationCenter[]> {
     try {
-      const response = await fetch(`${this.API_BASE_URL}/populationcenters`);
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch population centers: ${response.status} ${response.statusText}`,
-        );
-      }
-
-      const data = await response.json();
-
-      console.log(data);
-
-      return data;
+      return await this.fetchFromApi<PopulationCenter[]>(
+        this.ENDPOINTS.POPULATION_CENTERS,
+        "Failed to fetch population centers",
+      );
     } catch (error) {
       console.error("Error fetching population centers:", error);
       throw error;
@@ -48,17 +63,10 @@ export class PopulationCenterService {
    */
   public static async getById(id: string): Promise<PopulationCenter> {
     try {
-      const response = await fetch(
-        `${this.API_BASE_URL}/populationcenters/${id}`,
+      return await this.fetchFromApi<PopulationCenter>(
+        `${this.ENDPOINTS.POPULATION_CENTERS}/${id}`,
+        "Failed to fetch population center",
       );
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch population center: ${response.status} ${response.statusText}`,
-        );
-      }
-
-      return await response.json();
     } catch (error) {
       console.error(`Error fetching population center with ID ${id}:`, error);
       throw error;
@@ -99,17 +107,10 @@ export class PopulationCenterService {
     },
   ): Promise<any> {
     try {
-      const response = await fetch(
-        `${this.API_BASE_URL}/routes?FromId=${fromId}&ToId=${toId}`,
+      return await this.fetchFromApi<any>(
+        `${this.ENDPOINTS.ROUTES}?FromId=${fromId}&ToId=${toId}`,
+        "Failed to calculate route",
       );
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to calculate route: ${response.status} ${response.statusText}`,
-        );
-      }
-
-      return await response.json();
     } catch (error) {
       console.error("Error calculating route:", error);
       throw error;
