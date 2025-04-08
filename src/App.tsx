@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   Flex,
-  Group,
   Loader,
   Paper,
   Stack,
@@ -20,6 +19,8 @@ import {
 import { PointLabel, RouteData, RouteFormValues, RoutePoint } from "./types";
 import { AppContainerStyles } from "./styles";
 import { ThemeToggle } from "./components/ThemeToggle.tsx";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "./components/LanguageSwitcher.tsx";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -38,6 +39,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 function App() {
+  const { t } = useTranslation();
   const form = useForm<RouteFormValues>({
     initialValues: {
       pointA: "",
@@ -415,10 +417,19 @@ function App() {
 
   return (
     <Box style={AppContainerStyles}>
-      <Flex p="md" justify="space-between" align="center">
-        <Title order={1}>Your App Title</Title>
-        <ThemeToggle />
+      <Flex
+        gap="md"
+        justify="space-between"
+        style={{ paddingBlock: 20 }}
+        align="center"
+      >
+        <Title order={3}>Railway Vision</Title>
+        <Flex gap="sm" align="center">
+          <LanguageSwitcher />
+          <ThemeToggle />
+        </Flex>
       </Flex>
+
       <Flex
         gap="md"
         direction={{ base: "column", sm: "row" }}
@@ -431,14 +442,14 @@ function App() {
             })}
           >
             <Stack>
-              <Title order={3}>Route Options</Title>
+              <Title order={3}>{t("routeOptions")}</Title>
 
               <div style={{ position: "relative" }}>
                 <TextInput
                   ref={pointARef}
-                  label="Start Point"
-                  placeholder="Enter starting city"
-                  {...form.getInputProps("pointA")}
+                  label={t("startPoint")}
+                  placeholder={t("enter") + t("startingCity")}
+                  {...form.getInputProps(t("pointA"))}
                   onKeyDown={(e) => handleKeyDown(e, "A")}
                   onClick={() => {
                     setUserClicked((prev) => ({ ...prev, A: true }));
@@ -503,9 +514,9 @@ function App() {
               <div style={{ position: "relative" }}>
                 <TextInput
                   ref={pointBRef}
-                  label="End Point"
-                  placeholder="Enter destination city"
-                  {...form.getInputProps("pointB")}
+                  label={t("endPoint")}
+                  placeholder={t("enter") + t("destinationCity")}
+                  {...form.getInputProps(t("pointB"))}
                   onKeyDown={(e) => handleKeyDown(e, "B")}
                   onClick={() => {
                     setUserClicked((prev) => ({ ...prev, B: true }));
@@ -588,27 +599,27 @@ function App() {
               {/*  />*/}
               {/*</Group>*/}
 
-              <Group>
-                <Button
-                  variant={selectedPoint === "A" ? "filled" : "outline"}
-                  onClick={() =>
-                    setSelectedPoint(selectedPoint === "A" ? null : "A")
-                  }
-                >
-                  Set Start on Map
-                </Button>
-                <Button
-                  variant={selectedPoint === "B" ? "filled" : "outline"}
-                  onClick={() =>
-                    setSelectedPoint(selectedPoint === "B" ? null : "B")
-                  }
-                >
-                  Set Destination on Map
-                </Button>
-              </Group>
+              {/*<Group>*/}
+              {/*  <Button*/}
+              {/*    variant={selectedPoint === "A" ? "filled" : "outline"}*/}
+              {/*    onClick={() =>*/}
+              {/*      setSelectedPoint(selectedPoint === "A" ? null : "A")*/}
+              {/*    }*/}
+              {/*  >*/}
+              {/*    Set Start on Map*/}
+              {/*  </Button>*/}
+              {/*  <Button*/}
+              {/*    variant={selectedPoint === "B" ? "filled" : "outline"}*/}
+              {/*    onClick={() =>*/}
+              {/*      setSelectedPoint(selectedPoint === "B" ? null : "B")*/}
+              {/*    }*/}
+              {/*  >*/}
+              {/*    Set Destination on Map*/}
+              {/*  </Button>*/}
+              {/*</Group>*/}
 
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? <Loader size="sm" /> : "Calculate Route"}
+                {isLoading ? <Loader size="sm" /> : t("calculateRoute")}
               </Button>
 
               {errorMessage && (
@@ -620,9 +631,11 @@ function App() {
               {routeData && (
                 <Paper withBorder p="md">
                   <Title order={4}>Route Summary</Title>
-                  <Text>Distance: {routeData.distance?.toFixed(2)} km</Text>
                   <Text>
-                    Duration:{" "}
+                    {t("distance")}: {routeData.distance?.toFixed(2)} km
+                  </Text>
+                  <Text>
+                    {t("duration")}:{" "}
                     {Math.floor(+routeData.approximateDuration.split(":")[0])}h{" "}
                     {Math.round(+routeData.approximateDuration.split(":")[1])}m
                   </Text>

@@ -3,6 +3,7 @@ export const AppContainerStyles = {
   display: "flex",
   flexDirection: "column" as const,
   overflow: "hidden",
+  paddingInline: "20px",
 };
 
 export const FlexContentStyles = {
