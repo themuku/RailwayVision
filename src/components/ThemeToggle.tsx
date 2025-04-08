@@ -1,10 +1,10 @@
-// src/components/ThemeToggle.tsx
 import {
   ActionIcon,
   useMantineColorScheme,
   useComputedColorScheme,
 } from "@mantine/core";
-import { IconSun, IconMoon } from "@tabler/icons-react";
+import { MdSunny } from "react-icons/md";
+import { IoMdMoon } from "react-icons/io";
 
 export function ThemeToggle() {
   const { setColorScheme } = useMantineColorScheme();
@@ -22,9 +22,9 @@ export function ThemeToggle() {
       aria-label="Toggle color scheme"
     >
       {computedColorScheme === "dark" ? (
-        <IconSun size="1.2rem" stroke={1.5} />
+        <MdSunny size={20} />
       ) : (
-        <IconMoon size="1.2rem" stroke={1.5} />
+        <IoMdMoon size={20} />
       )}
     </ActionIcon>
   );
