@@ -10,13 +10,19 @@ import VectorSource from "ol/source/Vector";
 import { Feature } from "ol";
 import { Point, LineString } from "ol/geom";
 import { Style, Fill, Stroke, Circle, Text } from "ol/style";
-import { PointLabel, RoutePoint } from "../types";
+import {
+  Coordinate,
+  PathPoint,
+  PointLabel,
+  RouteData,
+  RoutePoint,
+} from "../types";
 
 interface MapViewProps {
   selectedPoint: PointLabel | null;
   onPointSet: (point: RoutePoint) => void;
   points: Record<PointLabel, RoutePoint | undefined>;
-  routeData: any | null;
+  routeData: RouteData | null;
 }
 
 export function MapView({
@@ -193,7 +199,7 @@ export function MapView({
     console.log("Route data:", routeData);
 
     if (routeData.route && routeData.route.length > 0) {
-      const routeCoordinates = routeData.route.map((point: any) =>
+      const routeCoordinates = routeData.route.map((point: Coordinate) =>
         fromLonLat([point.longitude, point.latitude]),
       );
 
@@ -205,7 +211,7 @@ export function MapView({
     }
 
     if (routeData.path && routeData.path.length > 0) {
-      routeData.path.forEach((station: any) => {
+      routeData.path.forEach((station: PathPoint) => {
         const stationFeature = new Feature({
           geometry: new Point(
             fromLonLat([
@@ -233,7 +239,7 @@ export function MapView({
           maxLng: -Infinity,
         };
 
-        routeData.route.forEach((point: any) => {
+        routeData.route.forEach((point: Coordinate) => {
           bounds.minLat = Math.min(bounds.minLat, point.latitude);
           bounds.maxLat = Math.max(bounds.maxLat, point.latitude);
           bounds.minLng = Math.min(bounds.minLng, point.longitude);

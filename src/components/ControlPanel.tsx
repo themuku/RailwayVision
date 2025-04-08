@@ -1,7 +1,7 @@
 import {
   Paper,
   Stack,
-  Switch,
+  // Switch,
   Button,
   Title,
   Text,
@@ -206,39 +206,39 @@ export function ControlPanel({
               onCitySelect={onCitySelect}
             />
 
-            <Switch
-              label="Include bridges"
-              checked={form.values.includeBridges}
-              onChange={(event) =>
-                form.setFieldValue(
-                  "includeBridges",
-                  event.currentTarget.checked,
-                )
-              }
-              mt="md"
-            />
+            {/*<Switch*/}
+            {/*  label="Include bridges"*/}
+            {/*  checked={form.values.includeBridges}*/}
+            {/*  onChange={(event) =>*/}
+            {/*    form.setFieldValue(*/}
+            {/*      "includeBridges",*/}
+            {/*      event.currentTarget.checked,*/}
+            {/*    )*/}
+            {/*  }*/}
+            {/*  mt="md"*/}
+            {/*/>*/}
 
-            <Switch
-              label="Include tunnels"
-              checked={form.values.includeTunnels}
-              onChange={(event) =>
-                form.setFieldValue(
-                  "includeTunnels",
-                  event.currentTarget.checked,
-                )
-              }
-            />
+            {/*<Switch*/}
+            {/*  label="Include tunnels"*/}
+            {/*  checked={form.values.includeTunnels}*/}
+            {/*  onChange={(event) =>*/}
+            {/*    form.setFieldValue(*/}
+            {/*      "includeTunnels",*/}
+            {/*      event.currentTarget.checked,*/}
+            {/*    )*/}
+            {/*  }*/}
+            {/*/>*/}
 
-            <Switch
-              label="Avoid obstacles"
-              checked={form.values.avoidObstacles}
-              onChange={(event) =>
-                form.setFieldValue(
-                  "avoidObstacles",
-                  event.currentTarget.checked,
-                )
-              }
-            />
+            {/*<Switch*/}
+            {/*  label="Avoid obstacles"*/}
+            {/*  checked={form.values.avoidObstacles}*/}
+            {/*  onChange={(event) =>*/}
+            {/*    form.setFieldValue(*/}
+            {/*      "avoidObstacles",*/}
+            {/*      event.currentTarget.checked,*/}
+            {/*    )*/}
+            {/*  }*/}
+            {/*/>*/}
           </Stack>
         </form>
 

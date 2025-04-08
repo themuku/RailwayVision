@@ -20,12 +20,15 @@ export interface Coordinate {
   longitude: number;
 }
 
-export interface StationPoint {
+export interface PathPoint {
   name: string;
+  distance: number;
   coordinate: Coordinate;
 }
 
 export interface RouteData {
   route: Coordinate[];
-  path: StationPoint[];
+  path: PathPoint[];
+  approximateDuration: string;
+  distance: number;
 }

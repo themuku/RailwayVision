@@ -1,9 +1,8 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "@mantine/form";
 import {
   Box,
   Button,
-  Checkbox,
   Flex,
   Group,
   Loader,
@@ -15,10 +14,10 @@ import {
 } from "@mantine/core";
 import { MapView } from "./components/MapView";
 import {
-  PopulationCenterService,
   PopulationCenter,
+  PopulationCenterService,
 } from "./services/stationService";
-import { PointLabel, RouteFormValues, RoutePoint } from "./types";
+import { PointLabel, RouteData, RouteFormValues, RoutePoint } from "./types";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -67,7 +66,7 @@ function App() {
 
   const [selectedPoint, setSelectedPoint] = useState<PointLabel | null>(null);
 
-  const [routeData, setRouteData] = useState<any | null>(null);
+  const [routeData, setRouteData] = useState<RouteData | null>(null);
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -215,6 +214,7 @@ function App() {
     return partialMatch || null;
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const verifyAndSetCities = async (): Promise<boolean> => {
     if (!selectedCenterIds.A && form.values.pointA) {
       const matchingCityA = findMatchingCity("A");
@@ -351,11 +351,11 @@ function App() {
       const routeData = await PopulationCenterService.calculateRoute(
         selectedCenterIds.A,
         selectedCenterIds.B,
-        {
-          includeBridges: form.values.includeBridges,
-          includeTunnels: form.values.includeTunnels,
-          avoidObstacles: form.values.avoidObstacles,
-        },
+        // {
+        //   includeBridges: form.values.includeBridges,
+        //   includeTunnels: form.values.includeTunnels,
+        //   avoidObstacles: form.values.avoidObstacles,
+        // },
       );
 
       setRouteData(routeData);
@@ -366,7 +366,7 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedCenterIds, form.values]);
+  }, [verifyAndSetCities, selectedCenterIds.A, selectedCenterIds.B]);
 
   useEffect(() => {
     if (debouncedPointA && userClicked.A) {
@@ -565,26 +565,26 @@ function App() {
                 )}
               </div>
 
-              <Group>
-                <Checkbox
-                  label="Include Bridges"
-                  {...form.getInputProps("includeBridges", {
-                    type: "checkbox",
-                  })}
-                />
-                <Checkbox
-                  label="Include Tunnels"
-                  {...form.getInputProps("includeTunnels", {
-                    type: "checkbox",
-                  })}
-                />
-                <Checkbox
-                  label="Avoid Obstacles"
-                  {...form.getInputProps("avoidObstacles", {
-                    type: "checkbox",
-                  })}
-                />
-              </Group>
+              {/*<Group>*/}
+              {/*  <Checkbox*/}
+              {/*    label="Include Bridges"*/}
+              {/*    {...form.getInputProps("includeBridges", {*/}
+              {/*      type: "checkbox",*/}
+              {/*    })}*/}
+              {/*  />*/}
+              {/*  <Checkbox*/}
+              {/*    label="Include Tunnels"*/}
+              {/*    {...form.getInputProps("includeTunnels", {*/}
+              {/*      type: "checkbox",*/}
+              {/*    })}*/}
+              {/*  />*/}
+              {/*  <Checkbox*/}
+              {/*    label="Avoid Obstacles"*/}
+              {/*    {...form.getInputProps("avoidObstacles", {*/}
+              {/*      type: "checkbox",*/}
+              {/*    })}*/}
+              {/*  />*/}
+              {/*</Group>*/}
 
               <Group>
                 <Button
@@ -620,8 +620,9 @@ function App() {
                   <Title order={4}>Route Summary</Title>
                   <Text>Distance: {routeData.distance?.toFixed(2)} km</Text>
                   <Text>
-                    Duration: {Math.floor(routeData.duration / 60)}h{" "}
-                    {Math.round(routeData.duration % 60)}m
+                    Duration:{" "}
+                    {Math.floor(+routeData.approximateDuration.split(":")[0])}h{" "}
+                    {Math.round(+routeData.approximateDuration.split(":")[1])}m
                   </Text>
                 </Paper>
               )}

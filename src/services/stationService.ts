@@ -1,3 +1,5 @@
+import { RouteData } from "../types";
+
 export interface PopulationCenter {
   latitude: number;
   longitude: number;
@@ -94,20 +96,19 @@ export class PopulationCenterService {
    * Calculates a route between two population centers using their IDs
    * @param fromId ID of the starting population center
    * @param toId ID of the destination population center
-   * @param _options
    * @returns Promise resolving to the calculated route data
    */
   public static async calculateRoute(
     fromId: string | number,
     toId: string | number,
-    _options: {
-      includeBridges: boolean;
-      includeTunnels: boolean;
-      avoidObstacles: boolean;
-    },
-  ): Promise<any> {
+    // _options: {
+    //   includeBridges: boolean;
+    //   includeTunnels: boolean;
+    //   avoidObstacles: boolean;
+    // },
+  ): Promise<RouteData> {
     try {
-      return await this.fetchFromApi<any>(
+      return await this.fetchFromApi<RouteData>(
         `${this.ENDPOINTS.ROUTES}?FromId=${fromId}&ToId=${toId}`,
         "Failed to calculate route",
       );
