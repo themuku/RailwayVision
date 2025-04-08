@@ -17,6 +17,7 @@ import {
   RouteData,
   RoutePoint,
 } from "../types";
+import { useComputedColorScheme } from "@mantine/core";
 
 interface MapViewProps {
   selectedPoint: PointLabel | null;
@@ -36,9 +37,11 @@ export function MapView({
   const pointsLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
   const routeLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
   const stationsLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
-
+  const computedColorScheme = useComputedColorScheme("light");
   useEffect(() => {
     if (!mapRef.current) return;
+
+    const tileSource = new OSM();
 
     const pointsSource = new VectorSource();
     const pointsLayer = new VectorLayer({
@@ -100,7 +103,7 @@ export function MapView({
       target: mapRef.current,
       layers: [
         new TileLayer({
-          source: new OSM(),
+          source: tileSource,
         }),
         routeLayer,
         stationsLayer,
@@ -131,7 +134,7 @@ export function MapView({
     return () => {
       map.dispose();
     };
-  }, [onPointSet, selectedPoint]);
+  }, [computedColorScheme, onPointSet, selectedPoint]);
 
   useEffect(() => {
     if (!pointsLayerRef.current) return;
@@ -287,5 +290,10 @@ export function MapView({
     }
   }, [routeData]);
 
-  return <div ref={mapRef} style={{ width: "100%", height: "100%" }} />;
+  return (
+    <div
+      ref={mapRef}
+      style={{ width: "100%", height: "100%" }} // Add explicit dimensions
+    />
+  );
 }

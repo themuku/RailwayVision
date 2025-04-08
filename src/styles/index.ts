@@ -7,8 +7,8 @@ export const AppContainerStyles = {
 
 export const FlexContentStyles = {
   flex: 1,
-  minHeight: 0,
   overflow: "hidden",
+  height: "calc(100vh - 94px)",
 };
 
 export const MapContainerStyles = {

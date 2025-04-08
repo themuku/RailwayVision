@@ -18,6 +18,8 @@ import {
   PopulationCenterService,
 } from "./services/stationService";
 import { PointLabel, RouteData, RouteFormValues, RoutePoint } from "./types";
+import { AppContainerStyles } from "./styles";
+import { ThemeToggle } from "./components/ThemeToggle.tsx";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -412,17 +414,17 @@ function App() {
   }, []);
 
   return (
-    <Box style={{ height: "100%" }} p="md">
-      <Title order={1} mb="md">
-        Rail Route Calculator
-      </Title>
-
+    <Box style={AppContainerStyles}>
+      <Flex p="md" justify="space-between" align="center">
+        <Title order={1}>Your App Title</Title>
+        <ThemeToggle />
+      </Flex>
       <Flex
         gap="md"
         direction={{ base: "column", sm: "row" }}
         style={{ height: "calc(100vh - 94px)" }}
       >
-        <Paper withBorder p="md" style={{ flex: 1 }}>
+        <Paper withBorder p="md" style={{ flex: 1, height: "100%" }}>
           <form
             onSubmit={form.onSubmit(() => {
               calculateRoute();
