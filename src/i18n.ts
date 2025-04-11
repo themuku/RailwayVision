@@ -10,8 +10,8 @@ const resources = {
       // App.tsx content
       pointA: "Origin",
       pointB: "Destination",
-      startPoint: "Starting Point",
-      endPoint: "Ending Point",
+      startPoint: "Enter starting city",
+      endPoint: "Enter destination city",
       startingCity: "starting city",
       destinationCity: "destination city",
       enter: "Enter ",
@@ -33,8 +33,8 @@ const resources = {
       // Russian translations
       pointA: "Начало",
       pointB: "Пункт назначения",
-      startPoint: "Начальная точка",
-      endPoint: "Конечная точка",
+      startPoint: "Введите город отправления",
+      endPoint: "Введите город назначения",
       startingCity: "начальный город",
       destinationCity: "город назначения",
       enter: "Введите ",
@@ -56,8 +56,8 @@ const resources = {
       // Azerbaijani translations
       pointA: "Başlanğıc",
       pointB: "Təyinat",
-      startPoint: "Başlanğıc nöqtəsi",
-      endPoint: "Son nöqtə",
+      startPoint: "Başlanğıc şəhəri daxil edin",
+      endPoint: "Təyinat şəhəri daxil edin",
       startingCity: "başlanğıc şəhəri",
       destinationCity: "təyinat şəhəri",
       enter: "Daxil edin ",
