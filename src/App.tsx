@@ -449,7 +449,7 @@ function App() {
                   ref={pointARef}
                   label={t("startPoint")}
                   placeholder={t("enter") + t("startingCity")}
-                  {...form.getInputProps(t("pointA"))}
+                  {...form.getInputProps("pointA")}
                   onKeyDown={(e) => handleKeyDown(e, "A")}
                   onClick={() => {
                     setUserClicked((prev) => ({ ...prev, A: true }));
@@ -516,7 +516,7 @@ function App() {
                   ref={pointBRef}
                   label={t("endPoint")}
                   placeholder={t("enter") + t("destinationCity")}
-                  {...form.getInputProps(t("pointB"))}
+                  {...form.getInputProps("pointB")}
                   onKeyDown={(e) => handleKeyDown(e, "B")}
                   onClick={() => {
                     setUserClicked((prev) => ({ ...prev, B: true }));
@@ -659,5 +659,3 @@ function App() {
 }
 
 export default App;
-
-// Route distance and duration calculated from backend

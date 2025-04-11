@@ -1,21 +1,6 @@
-import {
-  Paper,
-  Stack,
-  // Switch,
-  Button,
-  Title,
-  Text,
-  Autocomplete,
-} from "@mantine/core";
+import { Paper, Stack, Button, Title, Text, Autocomplete } from "@mantine/core";
 import { UseFormReturnType } from "@mantine/form";
-import {
-  useState,
-  useEffect,
-  KeyboardEvent,
-  CSSProperties,
-  ReactNode,
-} from "react";
-import { useDebouncedValue } from "@mantine/hooks";
+import { useState, useEffect, CSSProperties, ReactNode } from "react";
 
 interface RouteFormValues {
   pointA: string;
@@ -34,8 +19,6 @@ interface ControlPanelProps {
   onCitySelect: (cityName: string, pointLabel: "A" | "B") => void;
   onCalculate: () => void;
 }
-
-type RoutePoint = "A" | "B";
 
 const CONTAINER_STYLE: CSSProperties = {
   height: "100%",
@@ -62,104 +45,6 @@ const CALCULATE_BUTTON_STYLE: CSSProperties = {
   marginTop: "auto",
 };
 
-// ... (keep existing styles) ...
-
-interface StationSearchResult {
-  stationOptions: string[];
-  searchValue: string;
-  setSearchValue: (value: string) => void;
-}
-
-function useStationSearch(
-  searchStations: (query: string) => Promise<string[]>,
-): StationSearchResult {
-  const [stationOptions, setStationOptions] = useState<string[]>([]);
-  const [searchValue, setSearchValue] = useState<string>("");
-  const [debouncedSearch] = useDebouncedValue(searchValue, 300);
-
-  useEffect(() => {
-    const performSearch = async (): Promise<void> => {
-      if (debouncedSearch.length >= 2) {
-        try {
-          const results = await searchStations(debouncedSearch);
-          // Remove duplicates before setting state
-          const uniqueResults = [...new Set(results)];
-          setStationOptions(uniqueResults);
-        } catch (error) {
-          console.error("Error searching stations:", error);
-          setStationOptions([]);
-        }
-      } else if (debouncedSearch.length === 0) {
-        setStationOptions([]);
-      }
-    };
-    performSearch();
-  }, [debouncedSearch, searchStations]);
-
-  return { stationOptions, searchValue, setSearchValue };
-}
-interface RoutePointSelectorProps {
-  point: RoutePoint;
-  form: UseFormReturnType<RouteFormValues>;
-  selectedPoint: RoutePoint | null;
-  onPointSelect: (point: RoutePoint) => void;
-  stationOptions: string[];
-  searchValue: string;
-  setSearchValue: (value: string) => void;
-  onCitySelect: (cityName: string, pointLabel: RoutePoint) => void;
-}
-
-function RoutePointSelector({
-  point,
-  form,
-  selectedPoint,
-  onPointSelect,
-  stationOptions,
-  searchValue,
-  setSearchValue,
-  onCitySelect,
-}: RoutePointSelectorProps): ReactNode {
-  const [, setDropdownOpen] = useState(false);
-
-  return (
-    <>
-      <Autocomplete
-        label={`Point ${point}`}
-        placeholder={`Type to search or click 'Set Point ${point}' then click on map`}
-        data={stationOptions}
-        value={searchValue}
-        onChange={(value: string) => {
-          setSearchValue(value);
-          if (stationOptions.includes(value)) {
-            form.setFieldValue(`point${point}`, value);
-            onCitySelect(value, point);
-          }
-        }}
-        onKeyDown={(e: KeyboardEvent) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-          }
-        }}
-        variant="filled"
-        mt={point === "B" ? "sm" : undefined}
-        onBlur={() => {
-          setDropdownOpen(false);
-        }}
-      />
-      <Button
-        variant={selectedPoint === point ? "light" : "outline"}
-        color={selectedPoint === point ? "red" : "blue"}
-        onClick={() => onPointSelect(point)}
-        fullWidth
-      >
-        {selectedPoint === point
-          ? `Cancel Point ${point}`
-          : `Set Point ${point}`}
-      </Button>
-    </>
-  );
-}
-
 export function ControlPanel({
   form,
   selectedPoint,
@@ -169,88 +54,161 @@ export function ControlPanel({
   onCitySelect,
   onCalculate,
 }: ControlPanelProps): ReactNode {
-  const pointASearch = useStationSearch(searchStations);
-  const pointBSearch = useStationSearch(searchStations);
+  // Using separate state variables to track input values
+  const [pointAValue, setPointAValue] = useState(form.values.pointA || "");
+  const [pointBValue, setPointBValue] = useState(form.values.pointB || "");
+
+  // Station options state
+  const [pointAOptions, setPointAOptions] = useState<string[]>([]);
+  const [pointBOptions, setPointBOptions] = useState<string[]>([]);
+
+  // Search for stations when input changes
+  const searchForStations = async (query: string, point: "A" | "B") => {
+    if (query.length >= 2) {
+      try {
+        const results = await searchStations(query);
+        const uniqueResults = [...new Set(results)];
+        if (point === "A") {
+          setPointAOptions(uniqueResults);
+        } else {
+          setPointBOptions(uniqueResults);
+        }
+      } catch (error) {
+        console.error(`Error searching stations for point ${point}:`, error);
+        if (point === "A") {
+          setPointAOptions([]);
+        } else {
+          setPointBOptions([]);
+        }
+      }
+    } else {
+      if (point === "A") {
+        setPointAOptions([]);
+      } else {
+        setPointBOptions([]);
+      }
+    }
+  };
+
+  // Update form values when input changes
+  useEffect(() => {
+    if (form.values.pointA !== pointAValue && pointAValue) {
+      form.setFieldValue("pointA", pointAValue);
+    }
+  }, [pointAValue, form]);
+
+  useEffect(() => {
+    if (form.values.pointB !== pointBValue && pointBValue) {
+      form.setFieldValue("pointB", pointBValue);
+    }
+  }, [pointBValue, form]);
+
+  // Update input values when form changes (for external updates)
+  useEffect(() => {
+    if (form.values.pointA && form.values.pointA !== pointAValue) {
+      setPointAValue(form.values.pointA);
+    }
+  }, [form.values.pointA, pointAValue]);
+
+  useEffect(() => {
+    if (form.values.pointB && form.values.pointB !== pointBValue) {
+      setPointBValue(form.values.pointB);
+    }
+  }, [form.values.pointB, pointBValue]);
+
+  // Handle city selection
+  const handleCitySelect = (value: string, point: "A" | "B") => {
+    if (point === "A") {
+      setPointAValue(value);
+      form.setFieldValue("pointA", value);
+    } else {
+      setPointBValue(value);
+      form.setFieldValue("pointB", value);
+    }
+    onCitySelect(value, point);
+  };
 
   return (
-    <Paper shadow="md" p="md" w={350} radius="md" style={CONTAINER_STYLE}>
+    <Paper shadow="sm" p="md" withBorder style={CONTAINER_STYLE}>
+      <Title order={4} mb="md">
+        ADY Railways Route Planner
+      </Title>
       <div style={CONTENT_STYLE}>
         <form style={FORM_STYLE}>
-          <Title order={4} mb="md">
-            Route Calculator
-          </Title>
-          <Text size="sm" mb="md" c="dimmed">
-            Set points by searching for cities or by clicking on the map
-          </Text>
-
           <Stack>
-            <RoutePointSelector
-              point="A"
-              form={form}
-              selectedPoint={selectedPoint}
-              onPointSelect={onPointSelect}
-              stationOptions={pointASearch.stationOptions}
-              searchValue={pointASearch.searchValue}
-              setSearchValue={pointASearch.setSearchValue}
-              onCitySelect={onCitySelect}
-            />
+            {/* Point A */}
+            <div>
+              <Autocomplete
+                label="Point A"
+                placeholder="Type to search or click 'Set Point A' then click on map"
+                data={pointAOptions}
+                value={pointAValue}
+                onChange={(value) => {
+                  setPointAValue(value);
+                  searchForStations(value, "A");
+                }}
+                onOptionSubmit={(option) => {
+                  // This gets called when an option is selected from the dropdown
+                  handleCitySelect(option, "A");
+                }}
+              />
+              <Button
+                variant={selectedPoint === "A" ? "light" : "outline"}
+                color={selectedPoint === "A" ? "red" : "blue"}
+                onClick={() => onPointSelect("A")}
+                fullWidth
+                mt="xs"
+              >
+                {selectedPoint === "A"
+                  ? "Cancel Point A Selection"
+                  : "Set Point A on Map"}
+              </Button>
+            </div>
 
-            <RoutePointSelector
-              point="B"
-              form={form}
-              selectedPoint={selectedPoint}
-              onPointSelect={onPointSelect}
-              stationOptions={pointBSearch.stationOptions}
-              searchValue={pointBSearch.searchValue}
-              setSearchValue={pointBSearch.setSearchValue}
-              onCitySelect={onCitySelect}
-            />
-
-            {/*<Switch*/}
-            {/*  label="Include bridges"*/}
-            {/*  checked={form.values.includeBridges}*/}
-            {/*  onChange={(event) =>*/}
-            {/*    form.setFieldValue(*/}
-            {/*      "includeBridges",*/}
-            {/*      event.currentTarget.checked,*/}
-            {/*    )*/}
-            {/*  }*/}
-            {/*  mt="md"*/}
-            {/*/>*/}
-
-            {/*<Switch*/}
-            {/*  label="Include tunnels"*/}
-            {/*  checked={form.values.includeTunnels}*/}
-            {/*  onChange={(event) =>*/}
-            {/*    form.setFieldValue(*/}
-            {/*      "includeTunnels",*/}
-            {/*      event.currentTarget.checked,*/}
-            {/*    )*/}
-            {/*  }*/}
-            {/*/>*/}
-
-            {/*<Switch*/}
-            {/*  label="Avoid obstacles"*/}
-            {/*  checked={form.values.avoidObstacles}*/}
-            {/*  onChange={(event) =>*/}
-            {/*    form.setFieldValue(*/}
-            {/*      "avoidObstacles",*/}
-            {/*      event.currentTarget.checked,*/}
-            {/*    )*/}
-            {/*  }*/}
-            {/*/>*/}
+            {/* Point B */}
+            <div>
+              <Autocomplete
+                label="Point B"
+                placeholder="Type to search or click 'Set Point B' then click on map"
+                data={pointBOptions}
+                value={pointBValue}
+                onChange={(value) => {
+                  setPointBValue(value);
+                  searchForStations(value, "B");
+                }}
+                onOptionSubmit={(option) => {
+                  // This gets called when an option is selected from the dropdown
+                  handleCitySelect(option, "B");
+                }}
+              />
+              <Button
+                variant={selectedPoint === "B" ? "light" : "outline"}
+                color={selectedPoint === "B" ? "red" : "blue"}
+                onClick={() => onPointSelect("B")}
+                fullWidth
+                mt="xs"
+              >
+                {selectedPoint === "B"
+                  ? "Cancel Point B Selection"
+                  : "Set Point B on Map"}
+              </Button>
+            </div>
           </Stack>
         </form>
-
         <Button
+          color="blue"
           fullWidth
-          color="green"
-          disabled={!hasRoute}
           onClick={onCalculate}
+          disabled={!form.values.pointA || !form.values.pointB}
           style={CALCULATE_BUTTON_STYLE}
         >
           Calculate Route
         </Button>
+        {hasRoute && (
+          <Text size="sm" mt="sm" c="green">
+            Route calculated successfully!
+          </Text>
+        )}
       </div>
     </Paper>
   );
