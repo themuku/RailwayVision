@@ -16,7 +16,13 @@ import {
   PopulationCenter,
   PopulationCenterService,
 } from "./services/stationService";
-import { PointLabel, RouteData, RouteFormValues, RoutePoint } from "./types";
+import {
+  Coordinate,
+  PointLabel,
+  RouteData,
+  RouteFormValues,
+  RoutePoint,
+} from "./types";
 import { AppContainerStyles } from "./styles";
 import { ThemeToggle } from "./components/ThemeToggle.tsx";
 import { useTranslation } from "react-i18next";
@@ -36,6 +42,13 @@ function useDebounce<T>(value: T, delay: number): T {
   }, [value, delay]);
 
   return debouncedValue;
+}
+
+interface ProcessedStation {
+  name: string;
+  distance: number;
+  coordinate: Coordinate; // Make sure Coordinate is properly imported/defined
+  cumulativeDistance: number;
 }
 
 function App() {
@@ -67,6 +80,8 @@ function App() {
     A: undefined,
     B: undefined,
   });
+
+  const [processedPath, setProcessedPath] = useState<ProcessedStation[]>([]);
 
   const [selectedPoint, setSelectedPoint] = useState<PointLabel | null>(null);
 
@@ -415,6 +430,20 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (routeData && routeData.path) {
+      let cumulativeDistance = 0;
+      const processed = routeData.path.map((station) => {
+        cumulativeDistance += station.distance || 0;
+        return {
+          ...station,
+          cumulativeDistance: cumulativeDistance,
+        };
+      });
+      setProcessedPath(processed);
+    }
+  }, [routeData]);
+
   return (
     <Box style={AppContainerStyles}>
       <Flex
@@ -578,46 +607,6 @@ function App() {
                 )}
               </div>
 
-              {/*<Group>*/}
-              {/*  <Checkbox*/}
-              {/*    label="Include Bridges"*/}
-              {/*    {...form.getInputProps("includeBridges", {*/}
-              {/*      type: "checkbox",*/}
-              {/*    })}*/}
-              {/*  />*/}
-              {/*  <Checkbox*/}
-              {/*    label="Include Tunnels"*/}
-              {/*    {...form.getInputProps("includeTunnels", {*/}
-              {/*      type: "checkbox",*/}
-              {/*    })}*/}
-              {/*  />*/}
-              {/*  <Checkbox*/}
-              {/*    label="Avoid Obstacles"*/}
-              {/*    {...form.getInputProps("avoidObstacles", {*/}
-              {/*      type: "checkbox",*/}
-              {/*    })}*/}
-              {/*  />*/}
-              {/*</Group>*/}
-
-              {/*<Group>*/}
-              {/*  <Button*/}
-              {/*    variant={selectedPoint === "A" ? "filled" : "outline"}*/}
-              {/*    onClick={() =>*/}
-              {/*      setSelectedPoint(selectedPoint === "A" ? null : "A")*/}
-              {/*    }*/}
-              {/*  >*/}
-              {/*    Set Start on Map*/}
-              {/*  </Button>*/}
-              {/*  <Button*/}
-              {/*    variant={selectedPoint === "B" ? "filled" : "outline"}*/}
-              {/*    onClick={() =>*/}
-              {/*      setSelectedPoint(selectedPoint === "B" ? null : "B")*/}
-              {/*    }*/}
-              {/*  >*/}
-              {/*    Set Destination on Map*/}
-              {/*  </Button>*/}
-              {/*</Group>*/}
-
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? <Loader size="sm" /> : t("calculateRoute")}
               </Button>
@@ -629,17 +618,47 @@ function App() {
               )}
 
               {routeData && (
-                <Paper withBorder p="md">
-                  <Title order={4}>Route Summary</Title>
-                  <Text>
-                    {t("distance")}: {routeData.distance?.toFixed(2)} km
-                  </Text>
-                  <Text>
-                    {t("duration")}:{" "}
-                    {Math.floor(+routeData.approximateDuration.split(":")[0])}h{" "}
-                    {Math.round(+routeData.approximateDuration.split(":")[1])}m
-                  </Text>
-                </Paper>
+                <>
+                  <Paper withBorder p="md">
+                    <Title order={4}>{t("routeSummary")}</Title>
+                    <Text>
+                      {t("distance")}: {routeData.distance?.toFixed(2)} km
+                    </Text>
+                    <Text>
+                      {t("duration")}:{" "}
+                      {Math.floor(+routeData.approximateDuration.split(":")[0])}
+                      h{" "}
+                      {Math.round(+routeData.approximateDuration.split(":")[1])}
+                      m
+                    </Text>
+                  </Paper>
+                  <Paper
+                    withBorder
+                    p="md"
+                    style={{ height: "416px", overflowY: "hidden" }}
+                  >
+                    <Title style={{ marginBottom: 16 }} order={4}>
+                      {t("stations")}
+                    </Title>
+                    <Box
+                      style={{
+                        maxHeight: "calc(100% - 40px)",
+                        overflowY: "scroll",
+                      }}
+                    >
+                      {processedPath.map((station, index) => (
+                        <Paper key={index} withBorder p="xs" mb="xs">
+                          <Text>{station.name}</Text>
+                          <Text>
+                            {index === 0
+                              ? t("firstStation")
+                              : `${t("distance")}: ${station.cumulativeDistance.toFixed(2)} km`}
+                          </Text>
+                        </Paper>
+                      ))}
+                    </Box>
+                  </Paper>
+                </>
               )}
             </Stack>
           </form>

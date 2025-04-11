@@ -26,6 +26,9 @@ const resources = {
       searchForPlace: "Search for a place...",
       routeSummary: "Route Summary",
       routeOptions: "Route Options",
+      firstStation: "First Station",
+      lastStation: "Last Station",
+      stations: "Stations",
     },
   },
   ru: {
@@ -49,6 +52,9 @@ const resources = {
       searchForPlace: "Поиск места...",
       routeSummary: "Сводка маршрута",
       routeOptions: "Опции маршрута",
+      firstStation: "Точка отправления",
+      lastStation: "Точка назначения",
+      stations: "Остановки",
     },
   },
   az: {
@@ -72,6 +78,9 @@ const resources = {
       searchForPlace: "Yer axtarın...",
       routeSummary: "Marşrut xülasəsi",
       routeOptions: "Marşrut seçimləri",
+      firstStation: "İlk dayanacaq",
+      lastStation: "Son dayanacaq",
+      stations: "Dayanacaqlar",
     },
   },
 };

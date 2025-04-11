@@ -108,10 +108,12 @@ export class PopulationCenterService {
     // },
   ): Promise<RouteData> {
     try {
-      return await this.fetchFromApi<RouteData>(
+      const data = await this.fetchFromApi<RouteData>(
         `${this.ENDPOINTS.ROUTES}?FromId=${fromId}&ToId=${toId}`,
         "Failed to calculate route",
       );
+      console.log(data);
+      return data;
     } catch (error) {
       console.error("Error calculating route:", error);
       throw error;
