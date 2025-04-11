@@ -423,7 +423,7 @@ function App() {
         style={{ paddingBlock: 20 }}
         align="center"
       >
-        <Title order={3}>Railway Vision</Title>
+        <Title order={3}>KAMRAN-ISI-RAILWAY-VISION</Title>
         <Flex gap="sm" align="center">
           <LanguageSwitcher />
           <ThemeToggle />

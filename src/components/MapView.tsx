@@ -142,48 +142,27 @@ export function MapView({
     const source = pointsLayerRef.current.getSource();
     if (!source) return;
 
+    // Clear existing features
     source.clear();
 
-    Object.entries(points).forEach(([key, point]) => {
-      if (!point) return;
-
-      const feature = new Feature({
-        geometry: new Point(fromLonLat([point.lng, point.lat])),
-        pointType: key,
-        label: point.label,
+    // Add point A if it exists
+    if (points.A && points.A.lat && points.A.lng) {
+      const featureA = new Feature({
+        geometry: new Point(fromLonLat([points.A.lng, points.A.lat])),
+        pointType: "A",
+        label: "A",
       });
+      source.addFeature(featureA);
+    }
 
-      source.addFeature(feature);
-    });
-
-    const pointsArray = Object.values(points).filter(Boolean);
-    if (pointsArray.length === 2 && mapInstanceRef.current) {
-      try {
-        const bounds = {
-          minLat: Math.min(...pointsArray.map((p) => p!.lat)),
-          maxLat: Math.max(...pointsArray.map((p) => p!.lat)),
-          minLng: Math.min(...pointsArray.map((p) => p!.lng)),
-          maxLng: Math.max(...pointsArray.map((p) => p!.lng)),
-        };
-
-        const padding = 0.05; // ~5% padding
-        bounds.minLat -= padding;
-        bounds.maxLat += padding;
-        bounds.minLng -= padding;
-        bounds.maxLng += padding;
-
-        const extent = [
-          ...fromLonLat([bounds.minLng, bounds.minLat]),
-          ...fromLonLat([bounds.maxLng, bounds.maxLat]),
-        ];
-
-        mapInstanceRef.current.getView().fit(extent, {
-          padding: [50, 50, 50, 50],
-          maxZoom: 12,
-        });
-      } catch (error) {
-        console.error("Error fitting view to points:", error);
-      }
+    // Add point B if it exists
+    if (points.B && points.B.lat && points.B.lng) {
+      const featureB = new Feature({
+        geometry: new Point(fromLonLat([points.B.lng, points.B.lat])),
+        pointType: "B",
+        label: "B",
+      });
+      source.addFeature(featureB);
     }
   }, [points]);
 
